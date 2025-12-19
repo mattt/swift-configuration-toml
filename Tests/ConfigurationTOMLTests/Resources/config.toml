@@ -3,6 +3,10 @@ int = 42
 double = 3.14
 bool = true
 bytes = "bWFnaWM="
+offset_datetime = 2024-01-02T03:04:05Z
+local_datetime = 2024-01-02T03:04:05
+local_date = 2024-01-02
+local_time = 03:04:05
 
 [other]
 string = "Other Hello"
