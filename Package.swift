@@ -42,6 +42,9 @@ let package = Package(
                 "TOMLProvider",
                 .product(name: "ConfigurationTesting", package: "swift-configuration"),
             ],
+            resources: [
+                .copy("Resources")
+            ],
             swiftSettings: [
                 .interoperabilityMode(.Cxx)
             ]
