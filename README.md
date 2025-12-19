@@ -40,7 +40,7 @@ Then add the dependency to your target:
     name: "YourTarget",
     dependencies: [
         .product(name: "Configuration", package: "swift-configuration"),
-        .product(name: "TOMLProvider", package: "swift-configuration-toml")
+        .product(name: "ConfigurationTOML", package: "swift-configuration-toml")
     ]
 )
 ```
@@ -51,7 +51,7 @@ Then add the dependency to your target:
 
 ```swift
 import Configuration
-import TOMLProvider
+import ConfigurationTOML
 
 // Create a provider from a TOML file
 let provider = try TOMLProvider(filePath: "/path/to/config.toml")
@@ -122,7 +122,7 @@ let provider3 = try TOMLProvider(string: tomlString)
 
 ```swift
 import Configuration
-import TOMLProvider
+import ConfigurationTOML
 
 let options = TOMLSnapshot.ParsingOptions(
     bytesDecoder: .hex,
@@ -143,7 +143,7 @@ let apiKeyBytes = config.bytes(forKey: "api.key")
 
 ```swift
 import Configuration
-import TOMLProvider
+import ConfigurationTOML
 
 let provider = try await FileProvider<TOMLSnapshot>(
     filePath: "config.toml",

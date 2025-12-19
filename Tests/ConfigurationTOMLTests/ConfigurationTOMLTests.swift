@@ -1,5 +1,5 @@
 import Testing
-@testable import TOMLProvider
+@testable import ConfigurationTOML
 import Foundation
 import ConfigurationTesting
 import SystemPackage
