@@ -32,8 +32,8 @@ public struct TOMLSnapshot {
     }
 
     private struct ValueWrapper: CustomStringConvertible {
-        var value: TOMLValue
-        var isSecret: Bool
+        let value: TOMLValue
+        let isSecret: Bool
 
         var description: String {
             if isSecret { return "<REDACTED>" }
@@ -50,17 +50,12 @@ public struct TOMLSnapshot {
     }
 
     private static func dataFromRawSpan(_ data: RawSpan) -> Data {
-        data.withUnsafeBytes { pointer in
-            guard let base = pointer.baseAddress else {
-                return Data()
-            }
-            return Data(bytes: base, count: pointer.count)
-        }
+        data.withUnsafeBytes { Data($0) }
     }
 
-    private var values: [String: ValueWrapper]
+    private let values: [String: ValueWrapper]
     public let providerName: String
-    private var bytesDecoder: any ConfigBytesFromStringDecoder
+    private let bytesDecoder: any ConfigBytesFromStringDecoder
 
     private init(
         values: [String: ValueWrapper],
@@ -89,8 +84,10 @@ public struct TOMLSnapshot {
     ) -> [String: ValueWrapper] {
         var values: [String: ValueWrapper] = [:]
         var valuesToIterate: [([String], TOMLValue)] = parsedDictionary.map { ([$0], $1) }
-        while !valuesToIterate.isEmpty {
-            let (keyComponents, value) = valuesToIterate.removeFirst()
+        var index = 0
+        while index < valuesToIterate.count {
+            let (keyComponents, value) = valuesToIterate[index]
+            index += 1
             if case .table(let dict) = value {
                 valuesToIterate.append(contentsOf: dict.map { (keyComponents + [$0], $1) })
             } else {
@@ -114,46 +111,15 @@ public struct TOMLSnapshot {
         let value = valueWrapper.value
         let content: ConfigContent
 
+        func mapArray<T>(_ transform: (TOMLValue) throws -> T) throws -> [T] {
+            guard case .array(let array) = value else { try throwMismatch() }
+            return try array.map(transform)
+        }
+
         switch type {
         case .string:
-            switch value {
-            case .string(let str):
-                content = .string(str)
-            case .offsetDateTime(let date):
-                content = .string(ISO8601DateFormatter().string(from: date))
-            case .localDateTime(let localDateTime):
-                content = .string(
-                    String(
-                        format: "%04d-%02d-%02dT%02d:%02d:%02d",
-                        localDateTime.year,
-                        localDateTime.month,
-                        localDateTime.day,
-                        localDateTime.hour,
-                        localDateTime.minute,
-                        localDateTime.second
-                    )
-                )
-            case .localDate(let localDate):
-                content = .string(
-                    String(
-                        format: "%04d-%02d-%02d",
-                        localDate.year,
-                        localDate.month,
-                        localDate.day
-                    )
-                )
-            case .localTime(let localTime):
-                content = .string(
-                    String(
-                        format: "%02d:%02d:%02d",
-                        localTime.hour,
-                        localTime.minute,
-                        localTime.second
-                    )
-                )
-            default:
-                try throwMismatch()
-            }
+            guard let string = value.configStringValue else { try throwMismatch() }
+            content = .string(string)
         case .int:
             guard case .integer(let int64) = value else { try throwMismatch() }
             content = .int(Int(int64))
@@ -167,36 +133,31 @@ public struct TOMLSnapshot {
             guard case .string(let string) = value, let bytes = bytesDecoder.decode(string) else { try throwMismatch() }
             content = .bytes(bytes)
         case .stringArray:
-            guard case .array(let array) = value else { try throwMismatch() }
-            let strings = try array.map { item -> String in
+            let strings = try mapArray { item -> String in
                 guard case .string(let str) = item else { try throwMismatch() }
                 return str
             }
             content = .stringArray(strings)
         case .intArray:
-            guard case .array(let array) = value else { try throwMismatch() }
-            let ints = try array.map { item -> Int in
+            let ints = try mapArray { item -> Int in
                 guard case .integer(let int64) = item else { try throwMismatch() }
                 return Int(int64)
             }
             content = .intArray(ints)
         case .doubleArray:
-            guard case .array(let array) = value else { try throwMismatch() }
-            let doubles = try array.map { item -> Double in
+            let doubles = try mapArray { item -> Double in
                 guard case .float(let double) = item else { try throwMismatch() }
                 return double
             }
             content = .doubleArray(doubles)
         case .boolArray:
-            guard case .array(let array) = value else { try throwMismatch() }
-            let bools = try array.map { item -> Bool in
+            let bools = try mapArray { item -> Bool in
                 guard case .boolean(let bool) = item else { try throwMismatch() }
                 return bool
             }
             content = .boolArray(bools)
         case .byteChunkArray:
-            guard case .array(let array) = value else { try throwMismatch() }
-            let chunks = try array.map { item -> [UInt8] in
+            let chunks = try mapArray { item -> [UInt8] in
                 guard case .string(let str) = item, let bytes = bytesDecoder.decode(str) else { try throwMismatch() }
                 return bytes
             }
@@ -266,6 +227,18 @@ enum TOMLValue {
     case localTime(LocalTime)
     case array([TOMLValue])
     case table([String: TOMLValue])
+
+    /// TOML allows several date/time literal types; for Configuration we expose those as `.string`.
+    fileprivate var configStringValue: String? {
+        switch self {
+        case .string(let str):
+            return str
+        case .offsetDateTime, .localDateTime, .localDate, .localTime:
+            return description
+        default:
+            return nil
+        }
+    }
 }
 
 extension TOMLValue: CustomStringConvertible {
