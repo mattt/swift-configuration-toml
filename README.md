@@ -5,7 +5,7 @@ built on [swift-toml](https://github.com/mattt/swift-toml) for spec-compliant pa
 
 ## Requirements
 
-- Swift 6.2+ / Xcode 16+
+- Swift 6.2+ / Xcode 26+
 - macOS 15.0+ / iOS 18.0+ / watchOS 11.0+ / tvOS 18.0+ / visionOS 2.0+
 
 ## Installation
