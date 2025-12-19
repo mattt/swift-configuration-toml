@@ -357,6 +357,12 @@ private struct TOMLValueWrapper: Decodable {
             self.value = .float(double)
         } else if let bool = try? container.decode(Bool.self) {
             self.value = .boolean(bool)
+        } else if let localDateTime = try? container.decode(LocalDateTime.self) {
+            self.value = .localDateTime(localDateTime)
+        } else if let localDate = try? container.decode(LocalDate.self) {
+            self.value = .localDate(localDate)
+        } else if let localTime = try? container.decode(LocalTime.self) {
+            self.value = .localTime(localTime)
         } else if let date = try? container.decode(Date.self) {
             self.value = .offsetDateTime(date)
         } else {
