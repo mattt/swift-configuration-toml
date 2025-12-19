@@ -3,9 +3,23 @@ import Foundation
 import SystemPackage
 import TOML
 
-/// An immutable snapshot of TOML configuration data.
+/// A snapshot of configuration values parsed from TOML data.
+///
+/// This structure represents a point-in-time view of configuration values. It handles the
+/// conversion from TOML types to configuration value types.
+///
+/// ## Usage
+///
+/// Use with ``FileProvider``:
+///
+/// ```swift
+/// let provider = try await FileProvider<TOMLSnapshot>(filePath: "/etc/config.toml")
+/// let config = ConfigReader(provider: provider)
+/// ```
 public struct TOMLSnapshot {
+    /// Errors that can occur when converting a TOML value to a configuration value.
     public enum Error: Swift.Error, Sendable, CustomStringConvertible {
+        /// The underlying TOML value can’t be converted to the requested ``ConfigType``.
         case configValueNotConvertible(name: String, type: ConfigType)
 
         public var description: String {
@@ -16,10 +30,22 @@ public struct TOMLSnapshot {
         }
     }
 
+    /// Parsing options for TOML snapshot creation.
+    ///
+    /// Use this type to customize how TOML values are converted to configuration values,
+    /// including byte decoding and secrets specification.
     public struct ParsingOptions: FileParsingOptions {
+        /// A decoder of bytes from a string.
         public var bytesDecoder: any ConfigBytesFromStringDecoder
+
+        /// A specifier for determining which configuration values should be treated as secrets.
         public var secretsSpecifier: SecretsSpecifier<String, any Sendable>
 
+        /// Creates parsing options for TOML snapshots.
+        ///
+        /// - Parameters:
+        ///   - bytesDecoder: The decoder to use for converting string values to byte arrays.
+        ///   - secretsSpecifier: The specifier for identifying secret values.
         public init(
             bytesDecoder: some ConfigBytesFromStringDecoder = .base64,
             secretsSpecifier: SecretsSpecifier<String, any Sendable> = .none
@@ -28,6 +54,9 @@ public struct TOMLSnapshot {
             self.secretsSpecifier = secretsSpecifier
         }
 
+        /// The default parsing options.
+        ///
+        /// Uses base64 byte decoding and treats no values as secrets.
         public static var `default`: Self { .init() }
     }
 
