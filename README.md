@@ -29,6 +29,9 @@ Then add the dependency to your target:
     dependencies: [
         .product(name: "Configuration", package: "swift-configuration"),
         .product(name: "ConfigurationTOML", package: "swift-configuration-toml")
+    ],
+    swiftSettings: [
+        .interoperabilityMode(.Cxx)
     ]
 )
 ```
@@ -165,4 +168,3 @@ let cert = config.string(forKey: "server.ssl.certificate")
 
 This project is available under the MIT license.
 See the LICENSE file for more info.
-
