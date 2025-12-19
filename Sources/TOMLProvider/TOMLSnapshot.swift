@@ -3,137 +3,6 @@ import Foundation
 import SystemPackage
 import TOML
 
-// MARK: - TOML Value Representation
-
-/// An enumeration of TOML value types.
-enum TOMLValue {
-    case string(String)
-    case integer(Int64)
-    case float(Double)
-    case boolean(Bool)
-    case offsetDateTime(Date)
-    case localDateTime(LocalDateTime)
-    case localDate(LocalDate)
-    case localTime(LocalTime)
-    case array([TOMLValue])
-    case table([String: TOMLValue])
-}
-
-extension TOMLValue: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case .string(let str):
-            return str
-        case .integer(let int64):
-            return int64.description
-        case .float(let double):
-            return double.description
-        case .boolean(let bool):
-            return bool.description
-        case .offsetDateTime(let date):
-            return ISO8601DateFormatter().string(from: date)
-        case .localDateTime(let localDateTime):
-            return String(
-                format: "%04d-%02d-%02dT%02d:%02d:%02d",
-                localDateTime.year,
-                localDateTime.month,
-                localDateTime.day,
-                localDateTime.hour,
-                localDateTime.minute,
-                localDateTime.second
-            )
-        case .localDate(let localDate):
-            return String(
-                format: "%04d-%02d-%02d",
-                localDate.year,
-                localDate.month,
-                localDate.day
-            )
-        case .localTime(let localTime):
-            return String(
-                format: "%02d:%02d:%02d",
-                localTime.hour,
-                localTime.minute,
-                localTime.second
-            )
-        case .array(let array):
-            if array.isEmpty { return "[]" }
-            return array.map(\.description).joined(separator: ",")
-        case .table:
-            return "{...}"
-        }
-    }
-}
-
-// MARK: - Decoding Support
-
-/// Wrapper for decoding a TOML document into a dictionary.
-private struct TOMLTableWrapper: Decodable {
-    let value: [String: TOMLValue]
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
-        var result: [String: TOMLValue] = [:]
-        for key in container.allKeys {
-            result[key.stringValue] = try container.decode(TOMLValueWrapper.self, forKey: key).value
-        }
-        self.value = result
-    }
-}
-
-/// Wrapper for decoding individual TOML values.
-private struct TOMLValueWrapper: Decodable {
-    let value: TOMLValue
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-
-        if container.decodeNil() {
-            throw TOMLProviderError.invalidData("Unexpected nil value")
-        }
-
-        if let dict = try? container.decode([String: TOMLValueWrapper].self) {
-            var result: [String: TOMLValue] = [:]
-            for (key, wrapper) in dict {
-                result[key] = wrapper.value
-            }
-            self.value = .table(result)
-        } else if let array = try? container.decode([TOMLValueWrapper].self) {
-            self.value = .array(array.map(\.value))
-        } else if let string = try? container.decode(String.self) {
-            self.value = .string(string)
-        } else if let int = try? container.decode(Int64.self) {
-            self.value = .integer(int)
-        } else if let double = try? container.decode(Double.self) {
-            self.value = .float(double)
-        } else if let bool = try? container.decode(Bool.self) {
-            self.value = .boolean(bool)
-        } else if let date = try? container.decode(Date.self) {
-            self.value = .offsetDateTime(date)
-        } else {
-            throw TOMLProviderError.invalidData("Unable to decode TOML value")
-        }
-    }
-}
-
-/// A coding key that accepts any string value.
-private struct DynamicCodingKey: CodingKey {
-    var stringValue: String
-    var intValue: Int?
-
-    init?(stringValue: String) {
-        self.stringValue = stringValue
-        self.intValue = nil
-    }
-
-    init?(intValue: Int) {
-        self.stringValue = String(intValue)
-        self.intValue = intValue
-    }
-}
-
-// MARK: - Snapshot
-
 /// An immutable snapshot of TOML configuration data.
 public struct TOMLSnapshot {
     public enum Error: Swift.Error, Sendable, CustomStringConvertible {
@@ -338,15 +207,28 @@ public struct TOMLSnapshot {
     }
 }
 
-extension TOMLSnapshot: FileConfigSnapshot {
-    public init(data: RawSpan, providerName: String, parsingOptions: ParsingOptions) throws {
-        let fileData = Self.dataFromRawSpan(data)
-        guard let string = String(data: fileData, encoding: .utf8) else {
-            throw TOMLProviderError.invalidData("Unable to decode data as UTF-8")
-        }
-        try self.init(string: string, providerName: providerName, parsingOptions: parsingOptions)
+// MARK: - CustomStringConvertible
+
+extension TOMLSnapshot: CustomStringConvertible {
+    public var description: String {
+        "\(providerName)[\(values.count) values]"
     }
 }
+
+// MARK: - CustomDebugStringConvertible
+
+extension TOMLSnapshot: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        let prettyValues =
+            values
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: ", ")
+        return "\(providerName)[\(values.count) values: \(prettyValues)]"
+    }
+}
+
+// MARK: - ConfigSnapshot
 
 extension TOMLSnapshot: ConfigSnapshot {
     public func value(forKey key: AbsoluteConfigKey, type: ConfigType) throws -> LookupResult {
@@ -358,19 +240,141 @@ extension TOMLSnapshot: ConfigSnapshot {
     }
 }
 
-extension TOMLSnapshot: CustomStringConvertible {
-    public var description: String {
-        "\(providerName)[\(values.count) values]"
+// MARK: - FileConfigSnapshot
+
+extension TOMLSnapshot: FileConfigSnapshot {
+    public init(data: RawSpan, providerName: String, parsingOptions: ParsingOptions) throws {
+        let fileData = Self.dataFromRawSpan(data)
+        guard let string = String(data: fileData, encoding: .utf8) else {
+            throw TOMLProviderError.invalidData("Unable to decode data as UTF-8")
+        }
+        try self.init(string: string, providerName: providerName, parsingOptions: parsingOptions)
     }
 }
 
-extension TOMLSnapshot: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        let prettyValues =
-            values
-            .sorted { $0.key < $1.key }
-            .map { "\($0.key)=\($0.value)" }
-            .joined(separator: ", ")
-        return "\(providerName)[\(values.count) values: \(prettyValues)]"
+// MARK: -
+
+/// An enumeration of TOML value types.
+enum TOMLValue {
+    case string(String)
+    case integer(Int64)
+    case float(Double)
+    case boolean(Bool)
+    case offsetDateTime(Date)
+    case localDateTime(LocalDateTime)
+    case localDate(LocalDate)
+    case localTime(LocalTime)
+    case array([TOMLValue])
+    case table([String: TOMLValue])
+}
+
+extension TOMLValue: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .string(let str):
+            return str
+        case .integer(let int64):
+            return int64.description
+        case .float(let double):
+            return double.description
+        case .boolean(let bool):
+            return bool.description
+        case .offsetDateTime(let date):
+            return ISO8601DateFormatter().string(from: date)
+        case .localDateTime(let localDateTime):
+            return String(
+                format: "%04d-%02d-%02dT%02d:%02d:%02d",
+                localDateTime.year,
+                localDateTime.month,
+                localDateTime.day,
+                localDateTime.hour,
+                localDateTime.minute,
+                localDateTime.second
+            )
+        case .localDate(let localDate):
+            return String(
+                format: "%04d-%02d-%02d",
+                localDate.year,
+                localDate.month,
+                localDate.day
+            )
+        case .localTime(let localTime):
+            return String(
+                format: "%02d:%02d:%02d",
+                localTime.hour,
+                localTime.minute,
+                localTime.second
+            )
+        case .array(let array):
+            if array.isEmpty { return "[]" }
+            return array.map(\.description).joined(separator: ",")
+        case .table:
+            return "{...}"
+        }
+    }
+}
+
+/// Wrapper for decoding a TOML document into a dictionary.
+private struct TOMLTableWrapper: Decodable {
+    let value: [String: TOMLValue]
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        var result: [String: TOMLValue] = [:]
+        for key in container.allKeys {
+            result[key.stringValue] = try container.decode(TOMLValueWrapper.self, forKey: key).value
+        }
+        self.value = result
+    }
+}
+
+/// Wrapper for decoding individual TOML values.
+private struct TOMLValueWrapper: Decodable {
+    let value: TOMLValue
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if container.decodeNil() {
+            throw TOMLProviderError.invalidData("Unexpected nil value")
+        }
+
+        if let dict = try? container.decode([String: TOMLValueWrapper].self) {
+            var result: [String: TOMLValue] = [:]
+            for (key, wrapper) in dict {
+                result[key] = wrapper.value
+            }
+            self.value = .table(result)
+        } else if let array = try? container.decode([TOMLValueWrapper].self) {
+            self.value = .array(array.map(\.value))
+        } else if let string = try? container.decode(String.self) {
+            self.value = .string(string)
+        } else if let int = try? container.decode(Int64.self) {
+            self.value = .integer(int)
+        } else if let double = try? container.decode(Double.self) {
+            self.value = .float(double)
+        } else if let bool = try? container.decode(Bool.self) {
+            self.value = .boolean(bool)
+        } else if let date = try? container.decode(Date.self) {
+            self.value = .offsetDateTime(date)
+        } else {
+            throw TOMLProviderError.invalidData("Unable to decode TOML value")
+        }
+    }
+}
+
+/// A coding key that accepts any string value.
+private struct DynamicCodingKey: CodingKey {
+    var stringValue: String
+    var intValue: Int?
+
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+        self.intValue = nil
+    }
+
+    init?(intValue: Int) {
+        self.stringValue = String(intValue)
+        self.intValue = intValue
     }
 }
