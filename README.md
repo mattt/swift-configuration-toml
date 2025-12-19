@@ -1,19 +1,7 @@
 # Swift Configuration TOML
 
-A [TOML](https://toml.io) provider for the [Swift Configuration](https://github.com/apple/swift-configuration) framework.
-Enables reading configuration values from TOML files using the standard `ConfigReader` API.
-
-## Features
-
-- [x] Full integration with Swift Configuration framework
-- [x] Support for TOML scalars and arrays (strings, integers, floats, booleans)
-- [x] Nested tables and dotted keys
-- [x] Multiple initialization methods: file path, data, or string
-- [x] Support for `.bytes` and `.byteChunkArray` via `ConfigBytesFromStringDecoder` (default: base64)
-- [x] Support for secret redaction via `SecretsSpecifier`
-- [x] Type-safe configuration value access
-- [x] Default value support
-- [x] Built on [swift-toml](https://github.com/mattt/swift-toml) for spec-compliant parsing
+A [TOML](https://toml.io) provider for the [Swift Configuration](https://github.com/apple/swift-configuration) framework,
+built on [swift-toml](https://github.com/mattt/swift-toml) for spec-compliant parsing
 
 ## Requirements
 
