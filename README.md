@@ -17,7 +17,7 @@ Add the following to your `Package.swift` file:
 ```swift
 dependencies: [
     .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0"),
-    .package(url: "https://github.com/mattt/swift-configuration-toml.git", branch: "main")
+    .package(url: "https://github.com/mattt/swift-configuration-toml.git", from: "1.0.0")
 ]
 ```
 
@@ -45,7 +45,7 @@ import Configuration
 import ConfigurationTOML
 
 // Create a provider from a TOML file
-let provider = try TOMLProvider(filePath: "/path/to/config.toml")
+let provider = try await TOMLProvider(filePath: "/path/to/config.toml")
 let config = ConfigReader(provider: provider)
 
 // Read configuration values
@@ -66,7 +66,7 @@ let debug = config.bool(forKey: "debug", default: false)
 // url = "postgres://localhost/mydb"
 // maxConnections = 10
 
-let provider = try TOMLProvider(filePath: "config.toml")
+let provider = try await TOMLProvider(filePath: "config.toml")
 let config = ConfigReader(provider: provider)
 
 let host = config.string(forKey: "server.host")
@@ -82,31 +82,11 @@ let maxConn = config.int(forKey: "database.maxConnections")
 // ports = [8001, 8002, 8003]
 // names = ["alpha", "beta", "gamma"]
 
-let provider = try TOMLProvider(filePath: "config.toml")
+let provider = try await TOMLProvider(filePath: "config.toml")
 let config = ConfigReader(provider: provider)
 
 let ports = config.intArray(forKey: "ports")
 let names = config.stringArray(forKey: "names")
-```
-
-### Initialization Methods
-
-Create a provider from different sources:
-
-```swift
-// From a file path
-let provider1 = try TOMLProvider(filePath: "/path/to/config.toml")
-
-// From Data
-let data = try Data(contentsOf: url)
-let provider2 = try TOMLProvider(data: data)
-
-// From a string
-let tomlString = """
-title = "My App"
-port = 8080
-"""
-let provider3 = try TOMLProvider(string: tomlString)
 ```
 
 ### Parsing Options (bytes + secrets)
@@ -122,7 +102,7 @@ let options = TOMLSnapshot.ParsingOptions(
     }
 )
 
-let provider = try TOMLProvider(filePath: "config.toml", parsingOptions: options)
+let provider = try await TOMLProvider(filePath: "config.toml", parsingOptions: options)
 let config = ConfigReader(provider: provider)
 
 let apiKeyBytes = config.bytes(forKey: "api.key")
@@ -155,7 +135,7 @@ let config = ConfigReader(provider: provider)
 // enabled = true
 // certificate = "/path/to/cert.pem"
 
-let provider = try TOMLProvider(filePath: "config.toml")
+let provider = try await TOMLProvider(filePath: "config.toml")
 let config = ConfigReader(provider: provider)
 
 let host = config.string(forKey: "server.host")
