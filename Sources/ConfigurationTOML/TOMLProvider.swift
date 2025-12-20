@@ -32,6 +32,25 @@ import Foundation
 /// TOML date and time literals are represented as `.string` values.
 public typealias TOMLProvider = FileProvider<TOMLSnapshot>
 
+#if Reloading
+    /// A configuration provider that reads values from a TOML file with automatic reloading.
+    ///
+    /// Use `ReloadingTOMLProvider` when you want to watch a TOML configuration file on disk and
+    /// automatically reload it when it changes.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// let provider = try await ReloadingTOMLProvider(filePath: "/etc/config.toml")
+    /// let config = ConfigReader(provider: provider)
+    /// ```
+    ///
+    /// - Note: This provider is available only when the `Reloading` trait is enabled
+    ///         for the `swift-configuration` package.
+    /// - SeeAlso: ``TOMLProvider``
+    public typealias ReloadingTOMLProvider = ReloadingFileProvider<TOMLSnapshot>
+#endif
+
 /// Errors that can occur when creating or using a TOML provider.
 public enum TOMLProviderError: Error, Sendable {
     /// The provided data is invalid.
