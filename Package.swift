@@ -2,6 +2,16 @@
 
 import PackageDescription
 
+var traits: Set<Trait> = [
+    .trait(
+        name: "Reloading",
+        description: "Adds support for reloading file provider variants, such as ReloadingTOMLProvider."
+    )
+]
+
+// Disabled by default.
+traits.insert(.default(enabledTraits: []))
+
 let package = Package(
     name: "swift-configuration-toml",
     platforms: [
@@ -17,8 +27,16 @@ let package = Package(
             targets: ["ConfigurationTOML"]
         )
     ],
+    traits: traits,
     dependencies: [
-        .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0"),
+        .package(
+            url: "https://github.com/apple/swift-configuration.git",
+            from: "1.0.0",
+            traits: [
+                .defaults,
+                .trait(name: "Reloading", condition: .when(traits: ["Reloading"])),
+            ]
+        ),
         .package(url: "https://github.com/mattt/swift-toml.git", from: "1.0.0"),
     ],
     targets: [

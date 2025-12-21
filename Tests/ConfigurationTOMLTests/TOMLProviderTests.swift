@@ -52,3 +52,13 @@ struct TOMLProviderTests {
         #expect(localTime == "03:04:05")
     }
 }
+
+#if Reloading
+    @Suite("ReloadingTOMLProvider Tests")
+    struct ReloadingTOMLProviderTests {
+        @Test func typealiasIsDefined() {
+            let _: ReloadingTOMLProvider.Type = ReloadingTOMLProvider.self
+            #expect(ReloadingTOMLProvider.self == ReloadingFileProvider<TOMLSnapshot>.self)
+        }
+    }
+#endif

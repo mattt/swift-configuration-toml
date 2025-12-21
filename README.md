@@ -123,6 +123,39 @@ let provider = try await FileProvider<TOMLSnapshot>(
 let config = ConfigReader(provider: provider)
 ```
 
+### Reloading providers
+
+`ConfigurationTOML` includes a `Reloading` trait (disabled by default).
+Enable it to use `ReloadingTOMLProvider`.
+
+When enabled, this package also forwards the `Reloading` trait to its `swift-configuration`
+dependency automatically.
+
+```diff
+  dependencies: [
+      .package(
+          url: "https://github.com/mattt/swift-configuration-toml.git",
+          from: "1.0.0",
++         traits: [.defaults, .trait(name: "Reloading")]
+      )
+  ]
+```
+
+When the `Reloading` trait is enabled, you can use `ReloadingTOMLProvider` inside a `ServiceGroup`
+to enable automatic reloading of your configuration file.
+
+```swift
+import Configuration
+import ConfigurationTOML
+
+let provider = try await ReloadingTOMLProvider(filePath: "config.toml")
+let config = ConfigReader(provider: provider)
+
+let logger = Logger(label: "config")
+let serviceGroup = ServiceGroup(services: [provider], logger: logger)
+try await serviceGroup.run()
+```
+
 ### Complex Configuration
 
 ```swift
