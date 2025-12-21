@@ -41,7 +41,7 @@ jobs:
         run: swift format lint -v --strict --recursive .
 
       - name: Test
-        run: swift test -v
+        run: swift test -v --traits Reloading
 
   test-linux:
     name: Swift ${{ matrix.swift-version }} on Linux
@@ -68,4 +68,4 @@ jobs:
         run: swift format lint -v --strict --recursive .
 
       - name: Test
-        run: swift test -v
+        run: swift test -v --traits Reloading

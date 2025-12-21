@@ -46,7 +46,7 @@ public typealias TOMLProvider = FileProvider<TOMLSnapshot>
     /// ```
     ///
     /// - Note: This provider is available only when the `Reloading` trait is enabled
-    ///         for the `swift-configuration` package.
+    ///   for the `swift-configuration` and `swift-configuration-toml` packages.
     /// - SeeAlso: ``TOMLProvider``
     public typealias ReloadingTOMLProvider = ReloadingFileProvider<TOMLSnapshot>
 #endif
