@@ -1,5 +1,5 @@
 {
-  "originHash" : "aad3dffea29adf11c11175aa6def6933421dbc6a23aae0d3240d9753a50672e9",
+  "originHash" : "12dd03e7699239541eacfbc92228261a5603c8f963f75392de7d3d7139e652b1",
   "pins" : [
     {
       "identity" : "swift-async-algorithms",
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/swift-toml.git",
       "state" : {
-        "revision" : "1dfcf0e656e0bb4952a085eea0eb5c3bc6df0cce",
-        "version" : "1.0.0"
+        "revision" : "827506c90475e82d5a7f191f950fb3025cbdc0d6",
+        "version" : "2.0.0"
       }
     }
   ],
