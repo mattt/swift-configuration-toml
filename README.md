@@ -17,7 +17,7 @@ Add the following to your `Package.swift` file:
 ```swift
 dependencies: [
     .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0"),
-    .package(url: "https://github.com/mattt/swift-configuration-toml.git", from: "1.0.0")
+    .package(url: "https://github.com/mattt/swift-configuration-toml.git", from: "2.0.0")
 ]
 ```
 
@@ -29,9 +29,6 @@ Then add the dependency to your target:
     dependencies: [
         .product(name: "Configuration", package: "swift-configuration"),
         .product(name: "ConfigurationTOML", package: "swift-configuration-toml")
-    ],
-    swiftSettings: [
-        .interoperabilityMode(.Cxx)
     ]
 )
 ```

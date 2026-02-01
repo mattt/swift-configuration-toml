@@ -37,7 +37,7 @@ let package = Package(
                 .trait(name: "Reloading", condition: .when(traits: ["Reloading"])),
             ]
         ),
-        .package(url: "https://github.com/mattt/swift-toml.git", branch: "main"),
+        .package(url: "https://github.com/mattt/swift-toml.git", from: "2.0.0"),
 
         // Added explicitly as a workaround for https://github.com/apple/swift-configuration/issues/89
         .package(url: "https://github.com/apple/swift-metrics", from: "2.7.0"),
