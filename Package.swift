@@ -37,7 +37,7 @@ let package = Package(
                 .trait(name: "Reloading", condition: .when(traits: ["Reloading"])),
             ]
         ),
-        .package(url: "https://github.com/mattt/swift-toml.git", from: "1.0.0"),
+        .package(url: "https://github.com/mattt/swift-toml.git", branch: "main"),
 
         // Added explicitly as a workaround for https://github.com/apple/swift-configuration/issues/89
         .package(url: "https://github.com/apple/swift-metrics", from: "2.7.0"),
@@ -51,9 +51,6 @@ let package = Package(
 
                 // Added explicitly as a workaround for https://github.com/apple/swift-configuration/issues/89
                 .product(name: "Metrics", package: "swift-metrics"),
-            ],
-            swiftSettings: [
-                .interoperabilityMode(.Cxx)
             ]
         ),
         .testTarget(
@@ -64,11 +61,7 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources")
-            ],
-            swiftSettings: [
-                .interoperabilityMode(.Cxx)
             ]
         ),
-    ],
-    cxxLanguageStandard: .cxx17
+    ]
 )
