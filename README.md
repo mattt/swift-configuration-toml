@@ -132,7 +132,7 @@ dependency automatically.
   dependencies: [
       .package(
           url: "https://github.com/mattt/swift-configuration-toml.git",
-          from: "1.0.0",
+          from: "2.0.0",
 +         traits: [.defaults, .trait(name: "Reloading")]
       )
   ]
