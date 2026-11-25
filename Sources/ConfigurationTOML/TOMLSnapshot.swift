@@ -74,20 +74,16 @@ public struct TOMLSnapshot {
         components.joined(separator: ".")
     }
 
-    private static func encodeKey(_ key: AbsoluteConfigKey) -> String {
-        encodeKeyComponents(key.components)
-    }
-
     private static func dataFromRawSpan(_ data: RawSpan) -> Data {
         data.withUnsafeBytes { Data($0) }
     }
 
-    private let values: [String: ValueWrapper]
+    private let values: [[String]: ValueWrapper]
     public let providerName: String
     private let bytesDecoder: any ConfigBytesFromStringDecoder
 
     private init(
-        values: [String: ValueWrapper],
+        values: [[String]: ValueWrapper],
         providerName: String,
         bytesDecoder: any ConfigBytesFromStringDecoder
     ) {
@@ -110,8 +106,8 @@ public struct TOMLSnapshot {
     private static func flattenValues(
         _ parsedDictionary: [String: TOMLValue],
         secretsSpecifier: SecretsSpecifier<String, any Sendable>
-    ) -> [String: ValueWrapper] {
-        var values: [String: ValueWrapper] = [:]
+    ) -> [[String]: ValueWrapper] {
+        var values: [[String]: ValueWrapper] = [:]
         var valuesToIterate: [([String], TOMLValue)] = parsedDictionary.map { ([$0], $1) }
         var index = 0
         while index < valuesToIterate.count {
@@ -122,7 +118,7 @@ public struct TOMLSnapshot {
             } else {
                 let encodedKey = encodeKeyComponents(keyComponents)
                 let isSecret = secretsSpecifier.isSecret(key: encodedKey, value: value.description)
-                values[encodedKey] = .init(value: value, isSecret: isSecret)
+                values[keyComponents] = .init(value: value, isSecret: isSecret)
             }
         }
         return values
@@ -211,7 +207,8 @@ extension TOMLSnapshot: CustomDebugStringConvertible {
     public var debugDescription: String {
         let prettyValues =
             values
-            .sorted { $0.key < $1.key }
+            .map { (key: Self.encodeKeyComponents($0.key), value: $0.value.description) }
+            .sorted(by: <)
             .map { "\($0.key)=\($0.value)" }
             .joined(separator: ", ")
         return "\(providerName)[\(values.count) values: \(prettyValues)]"
@@ -222,8 +219,8 @@ extension TOMLSnapshot: CustomDebugStringConvertible {
 
 extension TOMLSnapshot: ConfigSnapshot {
     public func value(forKey key: AbsoluteConfigKey, type: ConfigType) throws -> LookupResult {
-        let encodedKey = Self.encodeKey(key)
-        guard let value = values[encodedKey] else {
+        let encodedKey = Self.encodeKeyComponents(key.components)
+        guard let value = values[key.components] else {
             return .init(encodedKey: encodedKey, value: nil)
         }
         return .init(encodedKey: encodedKey, value: try parseValue(value, key: key, type: type))
