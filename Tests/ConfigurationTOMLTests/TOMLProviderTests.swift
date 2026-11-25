@@ -35,6 +35,15 @@ struct TOMLProviderTests {
         try await ProviderCompatTest(provider: provider).runTest()
     }
 
+    @Test func dottedKeyComponents() async throws {
+        let provider = try await TOMLProvider(filePath: resourcesPath.appending("dotted-keys.toml"))
+        let config = ConfigReader(provider: provider)
+
+        #expect(config.string(forKey: ["service.name"]) == "literal")
+        #expect(config.string(forKey: ["service", "name"]) == "nested")
+        #expect(config.string(forKey: "service.name") == "nested")
+    }
+
     @Test func dateTimeLiteralsAsStrings() throws {
         let config = ConfigReader(provider: provider)
 
